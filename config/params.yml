@@ -1,4 +1,2 @@
 ---
   HostedZoneName: eastcoastproduct.com
-  # zoneId for cloudfront, its also a default value in template so its optional
-  HostedZoneId: Z2FDTNDATAQYW2
