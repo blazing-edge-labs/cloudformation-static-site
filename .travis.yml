@@ -6,7 +6,7 @@ python:
 install:
   - pip install --use-mirrors pep8 pyflakes
 
-script::
+script:
   - pep8 --version
   - pep8 .
   - pyflakes .
