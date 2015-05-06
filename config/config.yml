@@ -1,3 +1,7 @@
 ---
-  stack_name: ECPSite
+  stack_name: BESite
   region_name: us-east-1
+  # www_to_root
+  # true    - redirect www.example.com to example.com
+  # false   - redirect example.com to www.example.com
+  www_to_root: false

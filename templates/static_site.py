@@ -7,9 +7,14 @@ from troposphere.s3 import CorsConfiguration, CorsRules
 from troposphere.cloudfront import Distribution, DistributionConfig
 from troposphere.cloudfront import S3Origin, ForwardedValues
 from troposphere.cloudfront import Origin, DefaultCacheBehavior
+import yaml
 
 
 t = Template()
+
+text = open("config/config.yml", 'r')
+config = yaml.load(text)
+
 
 t.add_description(
     "AWS CloudFormation Template to create needed resources for static site "
@@ -19,36 +24,39 @@ t.add_description(
 
 t.add_mapping('RegionMap', {
     "us-east-1": {
-        "S3hostedzoneID": "Z3AQBSTGFYJSTF",
+        "hostedzoneID": "Z3AQBSTGFYJSTF",
         "websiteendpoint": "s3-website-us-east-1.amazonaws.com"
     },
     "us-west-1": {
-        "S3hostedzoneID": "Z2F56UZL2M1ACD",
+        "hostedzoneID": "Z2F56UZL2M1ACD",
         "websiteendpoint": "s3-website-us-west-1.amazonaws.com"
     },
     "us-west-2": {
-        "S3hostedzoneID": "Z3BJ6K6RIION7M",
+        "hostedzoneID": "Z3BJ6K6RIION7M",
         "websiteendpoint": "s3-website-us-west-2.amazonaws.com"
     },
     "eu-west-1": {
-        "S3hostedzoneID": "Z1BKCTXD74EZPE",
+        "hostedzoneID": "Z1BKCTXD74EZPE",
         "websiteendpoint": "s3-website-eu-west-1.amazonaws.com"
     },
     "ap-southeast-1": {
-        "S3hostedzoneID": "Z3O0J2DXBE1FTB",
+        "hostedzoneID": "Z3O0J2DXBE1FTB",
         "websiteendpoint": "s3-website-ap-southeast-1.amazonaws.com"
     },
     "ap-southeast-2": {
-        "S3hostedzoneID": "Z1WCIGYICN2BYD",
+        "hostedzoneID": "Z1WCIGYICN2BYD",
         "websiteendpoint": "s3-website-ap-southeast-2.amazonaws.com"
     },
     "ap-northeast-1": {
-        "S3hostedzoneID": "Z2M4EHUR26P7ZW",
+        "hostedzoneID": "Z2M4EHUR26P7ZW",
         "websiteendpoint": "s3-website-ap-northeast-1.amazonaws.com"
     },
     "sa-east-1": {
-        "S3hostedzoneID": "Z31GFT0UA1I2HV",
+        "hostedzoneID": "Z31GFT0UA1I2HV",
         "websiteendpoint": "s3-website-sa-east-1.amazonaws.com"
+    },
+    "cloudfront": {
+        "hostedzoneID": "Z2FDTNDATAQYW2"
     }
 })
 
@@ -57,6 +65,29 @@ HostedZoneName = t.add_parameter(Parameter(
     Description="The DNS name of an existing Amazon Route 53 hosted zone",
     Type="String"
 ))
+
+# prepare different configuration for www to root and vice versa
+if config['www_to_root']:
+    print("Redirecting www to root domain.")
+    aliases = [Ref(HostedZoneName)]
+    bucket_website_conf = WebsiteConfiguration(IndexDocument="index.html")
+    www_bucket_website_conf = WebsiteConfiguration(
+        RedirectAllRequestsTo=RedirectAllRequestsTo(
+            Protocol='http',
+            HostName=Ref(HostedZoneName)
+        )
+    )
+
+else:
+    print("Redirecting root domain to www.")
+    aliases = [Join("", ["www.", Ref(HostedZoneName)])]
+    bucket_website_conf = WebsiteConfiguration(
+        RedirectAllRequestsTo=RedirectAllRequestsTo(
+            Protocol='http',
+            HostName=Join("", ["www.", Ref(HostedZoneName)])
+        )
+    )
+    www_bucket_website_conf = WebsiteConfiguration(IndexDocument="index.html")
 
 StaticSiteBucket = t.add_resource(Bucket(
     "StaticSiteBucket",
@@ -71,12 +102,7 @@ StaticSiteBucket = t.add_resource(Bucket(
             MaxAge=3600
         )],
     ),
-    WebsiteConfiguration=WebsiteConfiguration(
-        RedirectAllRequestsTo=RedirectAllRequestsTo(
-            Protocol='http',
-            HostName=Join("", ["www.", Ref(HostedZoneName)])
-        )
-    )
+    WebsiteConfiguration=bucket_website_conf
 ))
 
 wwwStaticSiteBucket = t.add_resource(Bucket(
@@ -92,17 +118,13 @@ wwwStaticSiteBucket = t.add_resource(Bucket(
             MaxAge=3600
         )],
     ),
-    WebsiteConfiguration=WebsiteConfiguration(
-        IndexDocument="index.html"
-    )
+    WebsiteConfiguration=www_bucket_website_conf
 ))
 
 StaticSiteBucketDistribution = t.add_resource(Distribution(
     "StaticSiteBucketDistribution",
     DistributionConfig=DistributionConfig(
-        Aliases=[
-            Join("", ["www.", Ref(HostedZoneName)])
-        ],
+        Aliases=aliases,
         DefaultCacheBehavior=DefaultCacheBehavior(
             TargetOriginId="wwwStaticBucketOrigin",
             ViewerProtocolPolicy="allow-all",
@@ -157,16 +179,36 @@ wwwStaticSiteBucketPolicy = t.add_resource(BucketPolicy(
     }
 ))
 
-StaticSiteDNSRecord = t.add_resource(RecordSetGroup(
-    "StaticSiteDNSRecord",
-    HostedZoneName=Join("", [Ref(HostedZoneName), "."]),
-    Comment="Records for the root of the hosted zone",
-    RecordSets=[
+# prepares DNS records depending on redirect direction
+if config['www_to_root']:
+    record_sets = [
         RecordSet(
             Name=Join("", [Ref(HostedZoneName), "."]),
             Type="A",
             AliasTarget=AliasTarget(
-                FindInMap("RegionMap", Ref("AWS::Region"), "S3hostedzoneID"),
+                FindInMap("RegionMap", "cloudfront", "hostedzoneID"),
+                Join(
+                    "",
+                    [GetAtt(StaticSiteBucketDistribution, "DomainName"), "."]
+                ),
+            )
+        ),
+        RecordSet(
+            Name=Join("", ["www.", Ref(HostedZoneName), "."]),
+            Type="A",
+            AliasTarget=AliasTarget(
+                FindInMap("RegionMap", Ref("AWS::Region"), "hostedzoneID"),
+                FindInMap("RegionMap", Ref("AWS::Region"), "websiteendpoint")
+            )
+        ),
+    ]
+else:
+    record_sets = [
+        RecordSet(
+            Name=Join("", [Ref(HostedZoneName), "."]),
+            Type="A",
+            AliasTarget=AliasTarget(
+                FindInMap("RegionMap", Ref("AWS::Region"), "hostedzoneID"),
                 FindInMap("RegionMap", Ref("AWS::Region"), "websiteendpoint")
             )
         ),
@@ -178,7 +220,13 @@ StaticSiteDNSRecord = t.add_resource(RecordSetGroup(
                 GetAtt(StaticSiteBucketDistribution, "DomainName")
             ]
         ),
-    ],
+    ]
+
+StaticSiteDNSRecord = t.add_resource(RecordSetGroup(
+    "StaticSiteDNSRecord",
+    HostedZoneName=Join("", [Ref(HostedZoneName), "."]),
+    Comment="Records for the root of the hosted zone",
+    RecordSets=record_sets
 ))
 
 t.add_output(Output(
