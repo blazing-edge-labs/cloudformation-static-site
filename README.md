@@ -1,4 +1,4 @@
-# cloudformation-static-site
+# cloudformation-static-site [![Build Status](https://travis-ci.org/EastCoastProduct/cloudformation-static-site.png)](https://travis-ci.org/EastCoastProduct/cloudformation-static-site)
 Cloudformation script to set up static site hosting on AWS with S3 and Cloudfront
 
 This is cloudformation script that gets you up and running for hosting a static website on S3 and making it even faster behind CloudFront. After cloudformation stack is successfully created you are all set up on AWS to host static page. Root file is set to index.html on that bucket, so your page will need to have index.html root file or you can update the scripts to change it.
