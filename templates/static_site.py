@@ -1,8 +1,8 @@
-from troposphere import GetAtt, Join, Output
+from troposphere import GetAtt, Join, Output, FindInMap
 from troposphere import Parameter, Ref, Template
 from troposphere.route53 import RecordSetGroup, RecordSet, AliasTarget
 from troposphere.s3 import BucketPolicy, WebsiteConfiguration
-from troposphere.s3 import Bucket
+from troposphere.s3 import Bucket, RedirectAllRequestsTo
 from troposphere.s3 import CorsConfiguration, CorsRules
 from troposphere.cloudfront import Distribution, DistributionConfig
 from troposphere.cloudfront import S3Origin, ForwardedValues
@@ -17,24 +17,72 @@ t.add_description(
     "you already  have a Hosted Zone registered with Amazon Route 53. "
 )
 
+t.add_mapping('RegionMap', {
+    "us-east-1": {
+        "S3hostedzoneID": "Z3AQBSTGFYJSTF",
+        "websiteendpoint": "s3-website-us-east-1.amazonaws.com"
+    },
+    "us-west-1": {
+        "S3hostedzoneID": "Z2F56UZL2M1ACD",
+        "websiteendpoint": "s3-website-us-west-1.amazonaws.com"
+    },
+    "us-west-2": {
+        "S3hostedzoneID": "Z3BJ6K6RIION7M",
+        "websiteendpoint": "s3-website-us-west-2.amazonaws.com"
+    },
+    "eu-west-1": {
+        "S3hostedzoneID": "Z1BKCTXD74EZPE",
+        "websiteendpoint": "s3-website-eu-west-1.amazonaws.com"
+    },
+    "ap-southeast-1": {
+        "S3hostedzoneID": "Z3O0J2DXBE1FTB",
+        "websiteendpoint": "s3-website-ap-southeast-1.amazonaws.com"
+    },
+    "ap-southeast-2": {
+        "S3hostedzoneID": "Z1WCIGYICN2BYD",
+        "websiteendpoint": "s3-website-ap-southeast-2.amazonaws.com"
+    },
+    "ap-northeast-1": {
+        "S3hostedzoneID": "Z2M4EHUR26P7ZW",
+        "websiteendpoint": "s3-website-ap-northeast-1.amazonaws.com"
+    },
+    "sa-east-1": {
+        "S3hostedzoneID": "Z31GFT0UA1I2HV",
+        "websiteendpoint": "s3-website-sa-east-1.amazonaws.com"
+    }
+})
+
 HostedZoneName = t.add_parameter(Parameter(
     "HostedZoneName",
     Description="The DNS name of an existing Amazon Route 53 hosted zone",
     Type="String"
 ))
 
-HostedZoneId = t.add_parameter(Parameter(
-    "HostedZoneId",
-    Description="Id of hosted zone",
-    Type="String",
-    # default value is for cloudfront
-    Default="Z2FDTNDATAQYW2"
-))
-
 StaticSiteBucket = t.add_resource(Bucket(
     "StaticSiteBucket",
     AccessControl="PublicRead",
     BucketName=Ref(HostedZoneName),
+    CorsConfiguration=CorsConfiguration(
+        CorsRules=[CorsRules(
+            AllowedHeaders=["*"],
+            AllowedMethods=["GET"],
+            AllowedOrigins=["*"],
+            ExposedHeaders=["Date"],
+            MaxAge=3600
+        )],
+    ),
+    WebsiteConfiguration=WebsiteConfiguration(
+        RedirectAllRequestsTo=RedirectAllRequestsTo(
+            Protocol='http',
+            HostName=Join("", ["www.", Ref(HostedZoneName)])
+        )
+    )
+))
+
+wwwStaticSiteBucket = t.add_resource(Bucket(
+    "wwwStaticSiteBucket",
+    AccessControl="PublicRead",
+    BucketName=Join("", ["www.", Ref(HostedZoneName)]),
     CorsConfiguration=CorsConfiguration(
         CorsRules=[CorsRules(
             AllowedHeaders=["*"],
@@ -53,18 +101,17 @@ StaticSiteBucketDistribution = t.add_resource(Distribution(
     "StaticSiteBucketDistribution",
     DistributionConfig=DistributionConfig(
         Aliases=[
-            Ref(HostedZoneName),
             Join("", ["www.", Ref(HostedZoneName)])
         ],
         DefaultCacheBehavior=DefaultCacheBehavior(
-            TargetOriginId="staticBucketOrigin",
+            TargetOriginId="wwwStaticBucketOrigin",
             ViewerProtocolPolicy="allow-all",
             ForwardedValues=ForwardedValues(QueryString=False)
         ),
         DefaultRootObject="index.html",
         Origins=[Origin(
-            Id="staticBucketOrigin",
-            DomainName=GetAtt(StaticSiteBucket, "DomainName"),
+            Id="wwwStaticBucketOrigin",
+            DomainName=GetAtt(wwwStaticSiteBucket, "DomainName"),
             S3OriginConfig=S3Origin(),
         )],
         Enabled=True,
@@ -91,6 +138,25 @@ StaticSiteBucketPolicy = t.add_resource(BucketPolicy(
     }
 ))
 
+wwwStaticSiteBucketPolicy = t.add_resource(BucketPolicy(
+    "wwwStaticSiteBucketPolicy",
+    Bucket=Ref(wwwStaticSiteBucket),
+    PolicyDocument={
+        "Statement": [{
+            "Action": ["s3:GetObject"],
+            "Effect": "Allow",
+            "Resource": {
+                "Fn::Join": ["", [
+                    "arn:aws:s3:::",
+                    {"Ref": "wwwStaticSiteBucket"},
+                    "/*"
+                    ]
+                ]},
+            "Principal": "*"
+            }]
+    }
+))
+
 StaticSiteDNSRecord = t.add_resource(RecordSetGroup(
     "StaticSiteDNSRecord",
     HostedZoneName=Join("", [Ref(HostedZoneName), "."]),
@@ -100,23 +166,17 @@ StaticSiteDNSRecord = t.add_resource(RecordSetGroup(
             Name=Join("", [Ref(HostedZoneName), "."]),
             Type="A",
             AliasTarget=AliasTarget(
-                Ref(HostedZoneId),
-                Join(
-                    "",
-                    [GetAtt(StaticSiteBucketDistribution, "DomainName"), "."]
-                ),
+                FindInMap("RegionMap", Ref("AWS::Region"), "S3hostedzoneID"),
+                FindInMap("RegionMap", Ref("AWS::Region"), "websiteendpoint")
             )
         ),
         RecordSet(
             Name=Join("", ["www.", Ref(HostedZoneName), "."]),
-            Type="A",
-            AliasTarget=AliasTarget(
-                Ref(HostedZoneId),
-                Join(
-                    "",
-                    [GetAtt(StaticSiteBucketDistribution, "DomainName"), "."]
-                ),
-            )
+            Type="CNAME",
+            TTL="900",
+            ResourceRecords=[
+                GetAtt(StaticSiteBucketDistribution, "DomainName")
+            ]
         ),
     ],
 ))
@@ -130,7 +190,7 @@ t.add_output(Output(
 t.add_output(Output(
     "S3WebsiteURL",
     Description="S3 Website URL",
-    Value=GetAtt(StaticSiteBucket, "WebsiteURL")
+    Value=GetAtt(wwwStaticSiteBucket, "WebsiteURL")
 ))
 
 

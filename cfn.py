@@ -47,14 +47,14 @@ def update(config, params):
     cfn_conn = cfn_connect(config['region_name'])
     cfn_update(cfn_conn, config['stack_name'], template.get(), params)
 
-    print "Updating stack: {0}".format(config['stack_name'])
+    print("Updating stack: {0}".format(config['stack_name']))
 
 
 def create(config, params):
     cfn_conn = cfn_connect(config['region_name'])
     cfn_create(cfn_conn, config['stack_name'], template.get(), params)
 
-    print "Creating stack: {0}".format(config['stack_name'])
+    print("Creating stack: {0}".format(config['stack_name']))
 
 
 def parse_args():
