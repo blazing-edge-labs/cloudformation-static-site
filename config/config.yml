@@ -4,4 +4,4 @@
   # www_to_root
   # true    - redirect www.example.com to example.com
   # false   - redirect example.com to www.example.com
-  www_to_root: false
+  www_to_root: true
