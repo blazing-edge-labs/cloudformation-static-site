@@ -1,5 +1,5 @@
 ---
-  stack_name: BESite
+  stack_name: StaticSite
   region_name: us-east-1
   # www_to_root
   # true    - redirect www.example.com to example.com
