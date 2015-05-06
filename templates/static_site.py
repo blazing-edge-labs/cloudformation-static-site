@@ -121,19 +121,24 @@ wwwStaticSiteBucket = t.add_resource(Bucket(
     WebsiteConfiguration=www_bucket_website_conf
 ))
 
+if config['www_to_root']:
+    origin_bucket = GetAtt(StaticSiteBucket, "DomainName")
+else:
+    origin_bucket = GetAtt(wwwStaticSiteBucket, "DomainName")
+
 StaticSiteBucketDistribution = t.add_resource(Distribution(
     "StaticSiteBucketDistribution",
     DistributionConfig=DistributionConfig(
         Aliases=aliases,
         DefaultCacheBehavior=DefaultCacheBehavior(
-            TargetOriginId="wwwStaticBucketOrigin",
+            TargetOriginId="staticBucketOrigin",
             ViewerProtocolPolicy="allow-all",
             ForwardedValues=ForwardedValues(QueryString=False)
         ),
         DefaultRootObject="index.html",
         Origins=[Origin(
-            Id="wwwStaticBucketOrigin",
-            DomainName=GetAtt(wwwStaticSiteBucket, "DomainName"),
+            Id="staticBucketOrigin",
+            DomainName=origin_bucket,
             S3OriginConfig=S3Origin(),
         )],
         Enabled=True,
