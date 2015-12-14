@@ -1,4 +1,5 @@
-# cloudformation-static-site [![Build Status](https://travis-ci.org/EastCoastProduct/cloudformation-static-site.png)](https://travis-ci.org/EastCoastProduct/cloudformation-static-site)
+[![Build Status](https://travis-ci.org/EastCoastProduct/cloudformation-static-site.png)](https://travis-ci.org/EastCoastProduct/cloudformation-static-site)
+# cloudformation-static-site
 Cloudformation script to set up static site hosting on AWS with S3 and Cloudfront
 
 1. [What does it do?](#what_does_it_do)
