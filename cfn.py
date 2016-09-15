@@ -36,13 +36,6 @@ def cfn_create(cfn_conn, stack_name, template_body, parameters):
                           capabilities=capabilities, parameters=parameters)
 
 
-def get_parameters():
-    text = open("config/params.yml", 'r')
-    params = yaml.load(text)
-
-    return params.items()
-
-
 def update(config, params):
     cfn_conn = cfn_connect(config['region_name'])
     cfn_update(cfn_conn, config['stack_name'], template.get(), params)
@@ -67,7 +60,7 @@ def parse_args():
 def main(args=None):
     args = parse_args()
     config = get_deploy_config()
-    params = get_parameters()
+    params = config['params'].items()
 
     # in case create flag is active do create, update is default action
     if args.create:
