@@ -3,7 +3,7 @@
 CloudFormation script to set up static site hosting on AWS with S3 and CloudFront
 
 1. [What does it do?](#what_does_it_do)
-2. [Steps to run the script](#steps_to run the script)
+2. [Steps to Run the Script](#steps_to run the script)
 3. [Setting the Root Redirect](#setting the root redirect)
 4. [Getting Your Files on S3](#getting your files on s3)
 
