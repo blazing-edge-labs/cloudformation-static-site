@@ -6,7 +6,6 @@ CloudFormation script to set up static site hosting on AWS with S3 and CloudFron
 2. [Steps to make it work](#steps_to_make_it_work)
 3. [www to root config](#www_to_root)
 4. [get files on S3](#get_files_on_s3)
-5. (optional) [manually set CDN origin to static website](#manual_origin)
 
 ## What does it do?<a name="what_does_it_do"></a>
 
@@ -39,15 +38,4 @@ If set false and www subdomain is main it's using `www.example.com` bucket to se
 
 As explained in www_to_root config option, depending on which way it is set up, files need to be uploaded either on `example.com` or `www.example.com` S3 bucket. You can get files up there in any way you want, manually uploading them from AWS console or doing that through some kind of script.
 
- I hope you won't do the uploading manually, so check our [homepage](https://github.com/EastCoastProduct/homepage) that has a gulp publish task for uploading files to s3.
-
-## manually set origin to static website URL<a name="manual_origin"></a>
-
-This is a limitation of CloudFormation as the return value from S3 bucket creation is WebsiteURL with included HTTP protocol and CloudFront requires origin to be without protocol. At this point it's impossible to automate this process so you need to do following steps to achieve this (benefit of this is that routing will work properly as well as 404 error pages).
-
-1. Navigate to AWS console
-2. Go to CloudFormation
-2. Select your newly created distribution
-3. Navigate to Origins
-4. Add new origin using static URL without protocol (e.g. eastcoastproduct.com.s3-website-us-east-1.amazonaws.com)
-5. Delete the old origin that was set up directly to S3 bucket
+I hope you won't do the uploading manually, so check our [homepage](https://github.com/EastCoastProduct/homepage) that has a gulp publish task for uploading files to s3.
