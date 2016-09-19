@@ -3,9 +3,9 @@
 CloudFormation script to set up static site hosting on AWS with S3 and CloudFront
 
 1. [What does it do?](#what_does_it_do)
-2. [Steps to make it work](#steps_to_make_it_work)
-3. [www to root config](#www_to_root)
-4. [get files on S3](#get_files_on_s3)
+2. [Steps to run the script](#steps_to run the script)
+3. [Setting the Root Redirect](#setting the root redirect)
+4. [Getting Your Files on S3](#getting your files on s3)
 
 ## What does it do?<a name="what_does_it_do"></a>
 
@@ -13,7 +13,7 @@ This is a CloudFormation script that helps you host a static website on S3. The 
 
 The only thing you need to do is sync your static page directory in the S3 bucket with index.html as the root.
 
-## Steps to Run the Script<a name="steps_to_make_it_work"></a>
+## Steps to Run the Script<a name="steps_to_run_the_script"></a>
 
 1. The only manual step required is to create a hosted zone for your domain on Route53 if you aren't using Route53 for your site already. This is required to host a static page on AWS (__Important:__ Remember to transfer your existing DNS records to Route53)
 2. Modify files in config as needed. You need to edit `config/config.yml`  and change the configuration values as needed. Configuration options are very self-explanatory
@@ -32,6 +32,6 @@ This option allows you to choose between having the root domain redirect to a ww
 
 Depending on the option selected, CloudFront will use different S3 buckets to serve the files. If set to "True" and the main domain is the root domain, it will use that S3 bucket (`example.com` bucket). If set to "False" and the www subdomain is the main one, it will use the `www.example.com` bucket to serve the files.
 
-## Get your files on S3<a name="get_files_on_s3"></a>
+## Getting your Files on S3<a name="get_files_on_s3"></a>
 
 Depending on how the www_to_root config optionis set up, files will need to be uploaded either to the `example.com` or `www.example.com` S3 bucket. You can upload files manually from the AWS console or through a script. If you don't have a script, we've written a gulp publish task to help you upload files to S3. Check it out at the [East Coast Product](https://github.com/EastCoastProduct/homepage) homepage.
