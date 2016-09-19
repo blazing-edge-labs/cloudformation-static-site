@@ -5,7 +5,7 @@ from troposphere.s3 import BucketPolicy, WebsiteConfiguration
 from troposphere.s3 import Bucket, RedirectAllRequestsTo
 from troposphere.s3 import CorsConfiguration, CorsRules
 from troposphere.cloudfront import Distribution, DistributionConfig
-from troposphere.cloudfront import S3Origin, ForwardedValues
+from troposphere.cloudfront import ForwardedValues, CustomOrigin
 from troposphere.cloudfront import Origin, DefaultCacheBehavior
 import yaml
 
@@ -14,6 +14,7 @@ t = Template()
 
 text = open("config/config.yml", 'r')
 config = yaml.load(text)
+www_to_root = config['www_to_root']
 
 
 t.add_description(
@@ -67,7 +68,7 @@ HostedZoneName = t.add_parameter(Parameter(
 ))
 
 # prepare different configuration for www to root and vice versa
-if config['www_to_root']:
+if www_to_root:
     print("Redirecting www to root domain.")
     aliases = [Ref(HostedZoneName)]
     bucket_website_conf = WebsiteConfiguration(IndexDocument="index.html")
@@ -121,29 +122,32 @@ wwwStaticSiteBucket = t.add_resource(Bucket(
     WebsiteConfiguration=www_bucket_website_conf
 ))
 
-if config['www_to_root']:
-    origin_bucket = GetAtt(StaticSiteBucket, "DomainName")
-else:
-    origin_bucket = GetAtt(wwwStaticSiteBucket, "DomainName")
+origin_static_url = "{0}.s3-website-{1}.amazonaws.com".format(
+    config["params"]["HostedZoneName"], config["region_name"])
+if not www_to_root:
+    origin_static_url = "www.{0}".format(origin_static_url)
 
 StaticSiteBucketDistribution = t.add_resource(Distribution(
     "StaticSiteBucketDistribution",
     DistributionConfig=DistributionConfig(
         Aliases=aliases,
         DefaultCacheBehavior=DefaultCacheBehavior(
-            TargetOriginId="staticBucketOrigin",
+            TargetOriginId="staticSiteBucketOrigin",
             ViewerProtocolPolicy="allow-all",
             ForwardedValues=ForwardedValues(QueryString=False)
         ),
         DefaultRootObject="index.html",
         Origins=[Origin(
-            Id="staticBucketOrigin",
-            DomainName=origin_bucket,
-            S3OriginConfig=S3Origin(),
+            Id="staticSiteBucketOrigin",
+            DomainName=origin_static_url,
+            CustomOriginConfig=CustomOrigin(
+                OriginProtocolPolicy="http-only"
+            ),
         )],
         Enabled=True,
         PriceClass="PriceClass_100"
-    )
+    ),
+    DependsOn=["StaticSiteBucket", "wwwStaticSiteBucket"]
 ))
 
 StaticSiteBucketPolicy = t.add_resource(BucketPolicy(
@@ -185,7 +189,7 @@ wwwStaticSiteBucketPolicy = t.add_resource(BucketPolicy(
 ))
 
 # prepares DNS records depending on redirect direction
-if config['www_to_root']:
+if www_to_root:
     record_sets = [
         RecordSet(
             Name=Join("", [Ref(HostedZoneName), "."]),
