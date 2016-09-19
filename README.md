@@ -15,7 +15,7 @@ The only thing you need to do is sync your static page directory in the S3 bucke
 
 ## Steps to Run the Script<a name="steps_to_make_it_work"></a>
 
-1. The only manual step required is to create a hosted zone for your domain on Route53 if you aren't using Route53 for your site already. This is required to host a static page on AWS (__important:__ remember to transfer your existing DNS records to route53)
+1. The only manual step required is to create a hosted zone for your domain on Route53 if you aren't using Route53 for your site already. This is required to host a static page on AWS (__Important:__ Remember to transfer your existing DNS records to Route53)
 2. Modify files in config as needed. You need to edit `config/config.yml`  and change the configuration values as needed. Configuration options are very self-explanatory
 3. Install packages to run the script using pip install <package>
   1. _boto_ - and configure _boto_ with your AWS keys [Boto config](http://boto.readthedocs.org/en/latest/boto_config_tut.html)
@@ -34,4 +34,4 @@ Depending on the option selected, CloudFront will use different S3 buckets to se
 
 ## Get your files on S3<a name="get_files_on_s3"></a>
 
-Depending on how the www_to_root config optionis set up, files will need to be uploaded either to the `example.com` or `www.example.com` S3 bucket. You can upload files manually from the AWS console or through a script. If you don't have a script, we've written a gulp publish task to help you upload files to S3. Check it out at the [East Coast Product](https://github.com/EastCoastProduct/homepage)homepage.
+Depending on how the www_to_root config optionis set up, files will need to be uploaded either to the `example.com` or `www.example.com` S3 bucket. You can upload files manually from the AWS console or through a script. If you don't have a script, we've written a gulp publish task to help you upload files to S3. Check it out at the [East Coast Product](https://github.com/EastCoastProduct/homepage) homepage.
