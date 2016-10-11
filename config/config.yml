@@ -4,6 +4,8 @@
   # www_to_root
   #   true  - redirect www.example.com to example.com
   #   false - redirect example.com to www.example.com
+  index_document: index.html
+  error_document: error.html
   www_to_root: true
   params:
     HostedZoneName: blazingedgelabs.com

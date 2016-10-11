@@ -71,7 +71,10 @@ HostedZoneName = t.add_parameter(Parameter(
 if www_to_root:
     print("Redirecting www to root domain.")
     aliases = [Ref(HostedZoneName)]
-    bucket_website_conf = WebsiteConfiguration(IndexDocument="index.html")
+    bucket_website_conf = WebsiteConfiguration(
+        IndexDocument=config["index_document"],
+        ErrorDocument=config["error_document"]
+    )
     www_bucket_website_conf = WebsiteConfiguration(
         RedirectAllRequestsTo=RedirectAllRequestsTo(
             Protocol='http',
@@ -88,7 +91,10 @@ else:
             HostName=Join("", ["www.", Ref(HostedZoneName)])
         )
     )
-    www_bucket_website_conf = WebsiteConfiguration(IndexDocument="index.html")
+    www_bucket_website_conf = WebsiteConfiguration(
+        IndexDocument=config["index_document"],
+        ErrorDocument=config["error_document"]
+    )
 
 StaticSiteBucket = t.add_resource(Bucket(
     "StaticSiteBucket",
@@ -136,7 +142,7 @@ StaticSiteBucketDistribution = t.add_resource(Distribution(
             ViewerProtocolPolicy="allow-all",
             ForwardedValues=ForwardedValues(QueryString=False)
         ),
-        DefaultRootObject="index.html",
+        DefaultRootObject=config["index_document"],
         Origins=[Origin(
             Id="staticSiteBucketOrigin",
             DomainName=origin_static_url,
