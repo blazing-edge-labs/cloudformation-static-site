@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/EastCoastProduct/cloudformation-static-site.png)](https://travis-ci.org/EastCoastProduct/cloudformation-static-site)
+[![Build Status](https://travis-ci.org/blazing-edge-labs/cloudformation-static-site.svg?branch=master)](https://travis-ci.org/blazing-edge-labs/cloudformation-static-site)
 # cloudformation-static-site
 CloudFormation script to set up static site hosting on AWS with S3 and CloudFront
 
@@ -34,4 +34,4 @@ Depending on the option selected, CloudFront will use different S3 buckets to se
 
 ## Getting your Files on S3<a name="get_files_on_s3"></a>
 
-Depending on how the www_to_root config optionis set up, files will need to be uploaded either to the `example.com` or `www.example.com` S3 bucket. You can upload files manually from the AWS console or through a script. If you don't have a script, we've written a gulp publish task to help you upload files to S3. Check it out at the [East Coast Product](https://github.com/EastCoastProduct/homepage) homepage.
+Depending on how the www_to_root config optionis set up, files will need to be uploaded either to the `example.com` or `www.example.com` S3 bucket. You can upload files manually from the AWS console or through a script.
