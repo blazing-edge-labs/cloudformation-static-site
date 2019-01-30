@@ -3,9 +3,9 @@
 CloudFormation script to set up static site hosting on AWS with S3 and CloudFront
 
 1. [What does it do?](#what_does_it_do)
-2. [Steps to Run the Script](#steps_to run the script)
-3. [Setting the Root Redirect](#setting the root redirect)
-4. [Getting Your Files on S3](#getting your files on s3)
+2. [Steps to Run the Script](#steps_to_run_the_script)
+3. [Setting the Root Redirect](#setting_the_root_redirect)
+4. [Getting Your Files on S3](#getting_your_files_on_s3)
 
 ## What does it do?<a name="what_does_it_do"></a>
 
@@ -26,12 +26,12 @@ The only thing you need to do is sync your static page directory in the S3 bucke
 
 That's it, you are now all set up to host a static site on AWS S3 and CloudFront. The only thing left to do is to transfer your files to the bucket.
 
-## Setting the Root Redirect<a name="www_to_root"></a>
+## Setting the Root Redirect<a name="setting_the_root_redirect"></a>
 
 This option allows you to choose between having the root domain redirect to a www subdomain or vice versa. For example, if www_to_root is set to "True," requests to www.example.com will be redirected to example.com and if its set to "False" requests to example.com will be redirected to www.example.com.
 
 Depending on the option selected, CloudFront will use different S3 buckets to serve the files. If set to "True" and the main domain is the root domain, it will use that S3 bucket (`example.com` bucket). If set to "False" and the www subdomain is the main one, it will use the `www.example.com` bucket to serve the files.
 
-## Getting your Files on S3<a name="get_files_on_s3"></a>
+## Getting your Files on S3<a name="getting_your_files_on_s3"></a>
 
 Depending on how the www_to_root config optionis set up, files will need to be uploaded either to the `example.com` or `www.example.com` S3 bucket. You can upload files manually from the AWS console or through a script.
